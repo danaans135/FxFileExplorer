@@ -4,8 +4,11 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -46,8 +49,22 @@ public class FxFileExplorer extends Application {
                 } else {
                     ctrl.dirTree.getSelectionModel().select(selectedItem.getParent());
                 }
+            } else if (ev.getCode() == KeyCode.A) {
+                ctrl.mainSplit.setDividerPosition(0, 0);
+//                if (ctrl.mainSplit.getItems().contains(ctrl.dirTree)) {
+//                    ctrl.mainSplit.getItems().remove(ctrl.dirTree);
+//                } else {
+//                    ctrl.mainSplit.getItems().add(0, ctrl.dirTree);
+//                }
             }
         });
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.LEFT, KeyCombination.ALT_DOWN),
+                () -> ctrl.backButton.fire());
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.ALT_DOWN),
+                () -> ctrl.nextButton.fire());
+
     }
 
     public static void main(String[] args) {
