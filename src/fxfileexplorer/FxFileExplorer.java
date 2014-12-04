@@ -4,13 +4,11 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 public class FxFileExplorer extends Application {
 
@@ -26,10 +24,10 @@ public class FxFileExplorer extends Application {
         stage.setScene(scene);
         stage.show();
 
-        Stage dialog = new Stage(StageStyle.UTILITY);
-        Parent dr = FXMLLoader.load(getClass().getResource("BookmarkDialog.fxml"));
-        dialog.setScene(new Scene(dr));
-        dialog.show();
+//        Stage dialog = new Stage(StageStyle.UTILITY);
+//        Parent dr = FXMLLoader.load(getClass().getResource("BookmarkDialog.fxml"));
+//        dialog.setScene(new Scene(dr));
+//        dialog.show();
     }
 
     private void initKeyEvent(final FxFileExplorerController ctrl, Scene scene) {

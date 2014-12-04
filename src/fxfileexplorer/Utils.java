@@ -8,7 +8,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -42,6 +48,15 @@ public class Utils {
         out.flush();
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         return new javafx.scene.image.Image(in);
+    }
+
+    public static void alert(String text) {
+        Stage stage = new Stage(StageStyle.UTILITY);
+        stage.setTitle("alert");
+        Group group = new Group(new Text(25,25,text));
+        stage.setScene(new Scene(group, 350, 100));
+        stage.show();
+
     }
 
 }

@@ -10,12 +10,18 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+
+
+
+
 
 import javafx.application.Platform;
 import javafx.beans.binding.ObjectBinding;
@@ -27,26 +33,30 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.HBox;
-import javafx.util.Callback;
+
+
+
+
+
 
 import javax.swing.ImageIcon;
 import javax.swing.filechooser.FileSystemView;
@@ -87,7 +97,32 @@ public class FxFileExplorerController {
     public void setCurPath(String curPath) { this.curPath.set(curPath); }
     public String getCurPath() { return curPath.get(); }
 
+    private final class TreeCellExtension extends TextFieldTreeCell<String> {
+        private ContextMenu addMenu = new ContextMenu();
+
+        public TreeCellExtension() {
+            MenuItem propMenuItem = new MenuItem("プロパティ");
+            addMenu.getItems().add(propMenuItem);
+            propMenuItem.setOnAction(ev -> {
+//                showFileProprty(getTreeItem().getParent());
+                Utils.alert("Hello\nworld");
+//                getTreeItem().getChildren().add(newEmployee);
+            });
+        }
+
+        @Override
+        public void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (!empty) {
+                setContextMenu(addMenu);
+            }
+        }
+
+    }
+
     private final class TableCellExtension extends TableCell<Path, Path> {
+        private Integer iconImageWidth = null;
+
         public TableCellExtension() {
             setOnDragEntered(ev -> {
                 System.out.println("c dr en");
@@ -126,9 +161,12 @@ public class FxFileExplorerController {
                     imageView.setImage(iconImgCache.get(item));
                 } else {
                     // アイコンイメージ幅を設定
-                    ImageIcon icon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(item.toFile());
-                    java.awt.Image image = icon.getImage();
-                    imageView.setFitWidth(image.getWidth(null));
+                    if (iconImageWidth == null) {
+                        ImageIcon icon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(item.toFile());
+                        java.awt.Image image = icon.getImage();
+                        iconImageWidth = image.getWidth(null);
+                    }
+                    imageView.setFitWidth(iconImageWidth);
                     // アイコン設定（非同期）
                     Executor exec = Executors.newSingleThreadExecutor();
                     CompletableFuture
@@ -304,8 +342,28 @@ public class FxFileExplorerController {
         column1.setCellFactory(param -> {
             return new TableCellExtension();
         });
-        column1.setPrefWidth(300);
+        column1.setPrefWidth(400);
         fileTable.getColumns().add(column1);
+
+        // 更新日付列
+        TableColumn<Path, String> column3 = new TableColumn<Path, String>("更新日付");
+        column3.setCellValueFactory(param -> {
+            return new StringBinding() {
+                @Override
+                protected String computeValue() {
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+                        return sdf.format(new Date(Files.getLastModifiedTime(param.getValue()).toMillis()));
+//                        return Files.getLastModifiedTime(param.getValue()).toString();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return "";
+                    }
+                }
+            };
+        });
+        column3.setPrefWidth(130);
+        fileTable.getColumns().add(column3);
 
         // サイズ列
         TableColumn<Path, String> column2 = new TableColumn<Path, String>("サイズ");
@@ -313,12 +371,31 @@ public class FxFileExplorerController {
             return new StringBinding() {
                 @Override
                 protected String computeValue() {
+                    if (Files.isDirectory(arg0.getValue())) return "";
                     try {
-                        return String.valueOf(Files.size(arg0.getValue()));
+//                        return String.valueOf(Files.size(arg0.getValue()));
+                        return getFileSizeStr(Files.size(arg0.getValue()));
                     } catch (IOException e) {
                         e.printStackTrace();
                         return "-";
                     }
+                }
+
+                private String getFileSizeStr(long size) {
+                    if (size < 1024) return size + " B";
+                    else {
+                        return String.format("%,d KB", (size / 1024));
+                    }
+                }
+            };
+        });
+        column2.setCellFactory(param -> {
+            return new TableCell<Path, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    this.setText(item);
+                    this.setAlignment(Pos.CENTER_RIGHT);
                 }
             };
         });
@@ -375,6 +452,10 @@ public class FxFileExplorerController {
             TreeItem<String> treeItem = new PathTreeItem(p);
             rootItem.getChildren().add(treeItem);
         }
+        dirTree.setCellFactory(p -> {
+            return new TreeCellExtension();
+        });
+
 //        dirTree.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 //            if (newValue != null) {
 ////                System.out.println("selchan: "+newValue.getValue());
